@@ -4,7 +4,7 @@ import { LazyLoadImage } from "react-lazy-load-image-component";
 import "render-smooth-image-react/build/style.css";
 
 function App() {
-  const [games, setgames] = useState([]);
+  const [gameData, setgameData] = useState({});
   useEffect(() => {
     fetch("https://rawg-video-games-database.p.rapidapi.com/games", {
       method: "GET",
@@ -14,25 +14,56 @@ function App() {
       },
     })
       .then((resp) => resp.json())
-      .then((data) => {
-        setgames(data.results);
-        console.log(data.results);
+      .then(({ results, next, previous }) => {
+        setgameData({
+          games: results,
+          next,
+          previous,
+        });
+        console.log(results, next, previous);
       });
   }, []);
+  const generateNewResult = (link) => {
+    fetch(link)
+      .then((resp) => resp.json())
+      .then(({ results, next, previous }) => {
+        const newGames = gameData.games;
+        newGames.push(results);
+        setgameData({
+          games: results,
+          next,
+          previous,
+        });
+        console.log(results, next, previous);
+      });
+  };
   return (
     <div className="App">
       <div className="">
-        {games.map((game) => (
-          <div className="">
-            <h1>{game.name}</h1>
+        {gameData.games
+          ? gameData.games.map((game) => {
+              console.log(game, gameData);
+              return (
+                <div className="">
+                  <h1>{game.name}</h1>
 
-            <LazyLoadImage
-              alt={game.name}
-              width={100}
-              src={game.background_image} // use normal <img> attributes as props
-            />
-          </div>
-        ))}
+                  <LazyLoadImage
+                    alt={game.name}
+                    width={100}
+                    src={game.background_image} // use normal <img> attributes as props
+                  />
+                </div>
+              );
+            })
+          : null}
+        {gameData.next ? (
+          <button onClick={() => generateNewResult(gameData.next)}>Next</button>
+        ) : null}
+        {gameData.previous ? (
+          <button onClick={() => generateNewResult(gameData.previous)}>
+            previous
+          </button>
+        ) : null}
       </div>
     </div>
   );
